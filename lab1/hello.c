@@ -6,7 +6,7 @@
 #include <linux/moduleparam.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("kolganovr");
+MODULE_AUTHOR("kolganovr & mantlern");
 MODULE_DESCRIPTION("Simple kernel module with thread and parameters");
 
 static char *log_message = "Hello, kernel!";

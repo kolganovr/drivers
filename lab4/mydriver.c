@@ -5,10 +5,10 @@
 #include <linux/uaccess.h>
 #include <linux/time.h>
 #include <linux/timer.h>
-#include <linux/device.h> // Добавлен заголовочный файл для device_* функций
+#include <linux/device.h> 
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("kolganovr");
+MODULE_AUTHOR("kolganovr & mantlern");
 MODULE_DESCRIPTION("A simple character driver for generating and measuring reaction time");
 
 #define DEVICE_NAME "mydriver"

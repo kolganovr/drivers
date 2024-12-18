@@ -116,6 +116,5 @@ module_init(symbolic_driver_init);
 module_exit(symbolic_driver_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("kolganovr");
+MODULE_AUTHOR("kolganovr & mantlern");
 MODULE_DESCRIPTION("A symbolic driver with a global variable and a timer");
-MODULE_VERSION("0.1");
