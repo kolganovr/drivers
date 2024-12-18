@@ -35,10 +35,6 @@ MODULE_INFO(retpoline, "Y");
 
 static const char ____versions[]
 __used __section("__versions") =
-	"\x10\x00\x00\x00\xa6\x50\xba\x15"
-	"jiffies\0"
-	"\x14\x00\x00\x00\xb8\x83\x8c\xc3"
-	"mod_timer\0\0\0"
 	"\x1c\x00\x00\x00\x61\x94\xb6\x1c"
 	"__register_chrdev\0\0\0"
 	"\x18\x00\x00\x00\xe2\x75\x96\x16"
@@ -73,12 +69,12 @@ __used __section("__versions") =
 	"__x86_return_thunk\0\0"
 	"\x14\x00\x00\x00\x65\x93\x3f\xb4"
 	"ktime_get\0\0\0"
-	"\x14\x00\x00\x00\x45\x3a\x23\xeb"
-	"__kmalloc\0\0\0"
-	"\x10\x00\x00\x00\xba\x0c\x7a\x03"
-	"kfree\0\0\0"
 	"\x28\x00\x00\x00\xb3\x1c\xa2\x87"
 	"__ubsan_handle_out_of_bounds\0\0\0\0"
+	"\x10\x00\x00\x00\xa6\x50\xba\x15"
+	"jiffies\0"
+	"\x14\x00\x00\x00\xb8\x83\x8c\xc3"
+	"mod_timer\0\0\0"
 	"\x18\x00\x00\x00\xd7\xd3\x75\x6d"
 	"module_layout\0\0\0"
 	"\x00\x00\x00\x00\x00\x00\x00\x00";
@@ -86,4 +82,4 @@ __used __section("__versions") =
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "65A52630A3D971138A8044C");
+MODULE_INFO(srcversion, "2F539D0E957FD35E4214946");

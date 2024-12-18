@@ -30,12 +30,9 @@ static unsigned long long sum_reaction_times = 0;
 static unsigned long long min_reaction_time = ULLONG_MAX; // Инициализируем максимальным значением
 static unsigned long long max_reaction_time = 0;
 
-// Параметры гистограммы
-#define HISTOGRAM_NUM_BINS 10
-
-static unsigned long long histogram_bins[HISTOGRAM_NUM_BINS];
-static unsigned long long histogram_min_value = 0;
-static unsigned long long histogram_max_value = 0;
+#define MAX_REACTIONS 1024 // Максимальное количество хранимых реакций
+static unsigned long long reaction_times[MAX_REACTIONS]; // Массив для хранения времен реакций
+static unsigned long long current_index = 0; // Индекс для добавления новых значений в массив
 
 // Прототипы функций
 static int     dev_open(struct inode *, struct file *);
@@ -123,17 +120,12 @@ static void __exit mydriver_exit(void)
     min_reaction_time = ULLONG_MAX;
     max_reaction_time = 0;
 
-    // Обнуляем гистограмму
-    for (int i = 0; i < HISTOGRAM_NUM_BINS; i++) {
-        histogram_bins[i] = 0;
-    }
-    histogram_min_value = 0;
-    histogram_max_value = 0;
+    // Обнуляем индекс массива времен реакций
+    current_index = 0;
 
-    printk(KERN_INFO "mydriver: Goodbye from the LKM!\n");
+    printk(KERN_INFO "mydriver: Goodbye!\n");
 }
 
-// Функции для работы с устройством (пока что заглушки)
 
 static int dev_open(struct inode *inodep, struct file *filep){
    printk(KERN_INFO "mydriver: Device has been opened\n");
@@ -142,9 +134,10 @@ static int dev_open(struct inode *inodep, struct file *filep){
 
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
     int error_count = 0;
-    char message[512];
-    int message_len = 0;
+    char message[256];
+    int message_len;
     static bool data_read = false;
+    size_t total_sent = 0; // Общее количество байт, отправленных пользователю
 
     if (data_read) {
         data_read = false;
@@ -158,34 +151,9 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     }
 
     // Формируем строку с результатами
-    message_len += snprintf(message + message_len, sizeof(message) - message_len, 
-                            "Average: %llu ns, Max: %llu ns, Min: %llu ns\n",
-                            avg_reaction_time, max_reaction_time, min_reaction_time);
+    message_len = snprintf(message, sizeof(message), "Average: %llu ns, Max: %llu ns, Min: %llu ns\n",
+                           avg_reaction_time, max_reaction_time, min_reaction_time);
 
-    // Выводим гистограмму
-    message_len += snprintf(message + message_len, sizeof(message) - message_len, "Histogram:\n");
-    // Проверяем, были ли собраны данные для гистограммы
-    if (histogram_min_value == 0 && histogram_max_value == 0) {
-        message_len += snprintf(message + message_len, sizeof(message) - message_len, "Not enough data for histogram\n");
-    } else {
-        for (int i = 0; i < HISTOGRAM_NUM_BINS; i++) {
-            unsigned long long bin_start = histogram_min_value + i * (histogram_max_value - histogram_min_value) / HISTOGRAM_NUM_BINS;
-            unsigned long long bin_end = histogram_min_value + (i + 1) * (histogram_max_value - histogram_min_value) / HISTOGRAM_NUM_BINS;
-            message_len += snprintf(message + message_len, sizeof(message) - message_len, "[%llu - %llu]: ", bin_start, bin_end);
-
-            // Рисуем столбец гистограммы
-            for (int j = 0; j < histogram_bins[i]; j++) {
-                message_len += snprintf(message + message_len, sizeof(message) - message_len, "#");
-            }
-            message_len += snprintf(message + message_len, sizeof(message) - message_len, "\n");
-            if (message_len >= sizeof(message)) {
-                printk(KERN_WARNING "mydriver: Message too long\n");
-                break;
-            }
-        }
-    }
-
-    // Проверяем, не превышает ли длина сообщения размер буфера
     if (message_len >= sizeof(message)) {
         printk(KERN_WARNING "mydriver: Message too long\n");
         return -EINVAL;
@@ -193,15 +161,41 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 
     // Копируем данные в пользовательское пространство
     error_count = copy_to_user(buffer, message, message_len);
-
-    if (error_count == 0) {
-        printk(KERN_INFO "mydriver: Sent %d characters to the user\n", message_len);
-        data_read = true;
-        return (size_t)message_len;
-    } else {
+    
+    if (error_count != 0) {
         printk(KERN_INFO "mydriver: Failed to send %d characters to the user\n", error_count);
         return -EFAULT;
     }
+
+    printk(KERN_INFO "mydriver: Sent %d characters to the user\n", message_len);
+    total_sent += message_len;
+
+    // Выводим все времена реакций
+    for (unsigned long long i = 0; i < current_index; i++) {
+        message_len = snprintf(message, sizeof(message), "%llu ns\n", reaction_times[i]);
+
+        if (message_len >= sizeof(message)) {
+            printk(KERN_WARNING "mydriver: Message too long\n");
+            return -EINVAL;
+        }
+
+        if (total_sent + message_len > len) {
+            printk(KERN_WARNING "mydriver: Not enough space in user buffer\n");
+            break; // Прерываем цикл, если не хватает места в буфере
+        }
+
+        error_count = copy_to_user(buffer + total_sent, message, message_len);
+
+        if (error_count != 0) {
+            printk(KERN_INFO "mydriver: Failed to send %d characters to the user\n", error_count);
+            return -EFAULT;
+        }
+        printk(KERN_INFO "mydriver: Sent %d characters to the user\n", message_len);
+        total_sent += message_len;
+    }
+
+    data_read = true;
+    return (size_t)total_sent;
 }
 
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
@@ -220,55 +214,13 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         max_reaction_time = reaction_time_ns;
     }
 
-    // Выделяем память под массив для хранения времен реакций
-    unsigned long long *reaction_times_arr = kmalloc(sizeof(unsigned long long) * num_reactions, GFP_KERNEL);
-    if (!reaction_times_arr) {
-        printk(KERN_ERR "mydriver: Failed to allocate memory for reaction_times_arr\n");
-        return -ENOMEM; // Ошибка выделения памяти
-    }
-
-    // Обновляем гистограмму
-    int bin_index = 0;
-
-    // Обновляем минимальное и максимальное значения, используемые в гистограмме
-    if (histogram_min_value == 0 && histogram_max_value == 0) {
-        histogram_min_value = min_reaction_time;
-        histogram_max_value = max_reaction_time;
+    // Добавляем время реакции в массив
+    if (current_index < MAX_REACTIONS) {
+        reaction_times[current_index] = reaction_time_ns;
+        current_index++;
     } else {
-        if (reaction_time_ns < histogram_min_value) {
-            histogram_min_value = reaction_time_ns;
-        }
-        if (reaction_time_ns > histogram_max_value) {
-            histogram_max_value = reaction_time_ns;
-        }
+        printk(KERN_WARNING "mydriver: Maximum number of reactions reached, not storing new values\n");
     }
-
-    // Пересчитываем гистограмму
-    memset(histogram_bins, 0, sizeof(histogram_bins)); // Обнуляем гистограмму
-
-    // Сохраняем времена реакций в массив
-    unsigned long long temp_sum_reaction_times = sum_reaction_times;
-    for (unsigned long long i = 0; i < num_reactions; i++) {
-        if (i < num_reactions - 1) {
-            reaction_times_arr[i] = temp_sum_reaction_times / (num_reactions - i);
-            temp_sum_reaction_times -= reaction_times_arr[i];
-        } else {
-            reaction_times_arr[i] = reaction_time_ns;
-        }
-    }
-
-    // Заново заполняем гистограмму
-    for (unsigned long long i = 0; i < num_reactions; i++) {
-        if (reaction_times_arr[i] >= histogram_min_value && reaction_times_arr[i] <= histogram_max_value) {
-            bin_index = (reaction_times_arr[i] - histogram_min_value) * HISTOGRAM_NUM_BINS / (histogram_max_value - histogram_min_value + 1);
-            if (bin_index < HISTOGRAM_NUM_BINS) {
-                histogram_bins[bin_index]++;
-            }
-        }
-    }
-
-    // Освобождаем память
-    kfree(reaction_times_arr);
 
     printk(KERN_INFO "mydriver: Device write, reaction time: %llu ns\n", reaction_time_ns);
     return len;
