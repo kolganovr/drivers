@@ -50,5 +50,4 @@ def build_text_histogram_from_file(filename):
         upper_bound = lower_bound + bin_width
         print(f"{lower_bound:.0f}-{upper_bound:.0f} ns: {bar} ({counts[i]})")
 
-# Пример использования
 build_text_histogram_from_file('histdata.txt')
