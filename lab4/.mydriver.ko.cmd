@@ -1,1 +1,0 @@
-savedcmd_/home/kolganovr/coding/drivers/lab4/mydriver.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T scripts/module.lds -o /home/kolganovr/coding/drivers/lab4/mydriver.ko /home/kolganovr/coding/drivers/lab4/mydriver.o /home/kolganovr/coding/drivers/lab4/mydriver.mod.o

@@ -1,1 +1,0 @@
-savedcmd_/home/kolganovr/coding/drivers/lab4/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/kolganovr/coding/drivers/lab4/Module.symvers -T /home/kolganovr/coding/drivers/lab4/modules.order -i Module.symvers -e 

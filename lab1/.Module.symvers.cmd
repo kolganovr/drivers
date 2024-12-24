@@ -1,1 +1,0 @@
-savedcmd_/home/kolganovr/hello_module/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/kolganovr/hello_module/Module.symvers -T /home/kolganovr/hello_module/modules.order -i Module.symvers -e 

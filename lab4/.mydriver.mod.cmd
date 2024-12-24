@@ -1,1 +1,0 @@
-savedcmd_/home/kolganovr/coding/drivers/lab4/mydriver.mod := printf '%s\n'   mydriver.o | awk '!x[$$0]++ { print("/home/kolganovr/coding/drivers/lab4/"$$0) }' > /home/kolganovr/coding/drivers/lab4/mydriver.mod
