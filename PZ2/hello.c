@@ -9,7 +9,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("kolganovr & mantlern");
 MODULE_DESCRIPTION("Simple kernel module with thread and parameters");
 
-static char *log_message = "Hello, kernel!";
+static char *log_message = "Hello";
 module_param(log_message, charp, 0000);
 MODULE_PARM_DESC(log_message, "Message to print in the log");
 

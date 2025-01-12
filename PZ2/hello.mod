@@ -1,1 +1,1 @@
-/home/kolganovr/hello_module/hello.o
+/home/kolganovr/coding/drivers/PZ2/hello.o
